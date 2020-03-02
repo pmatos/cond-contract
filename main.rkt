@@ -1,50 +1,61 @@
 #lang racket/base
+;; ---------------------------------------------------------------------------------------------------
 
-(module+ test
-  (require rackunit))
+;; Copyright 2020 Paulo Matos
 
-;; Notice
-;; To install (from within the package directory):
-;;   $ raco pkg install
-;; To install (once uploaded to pkgs.racket-lang.org):
-;;   $ raco pkg install <<name>>
-;; To uninstall:
-;;   $ raco pkg remove <<name>>
-;; To view documentation:
-;;   $ raco docs <<name>>
+;;  Licensed under the Apache License, Version 2.0 (the "License");
+;;  you may not use this file except in compliance with the License.
+;;  You may obtain a copy of the License at
+
+;;      http://www.apache.org/licenses/LICENSE-2.0
+
+;;  Unless required by applicable law or agreed to in writing, software
+;;  distributed under the License is distributed on an "AS IS" BASIS,
+;;  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;;  See the License for the specific language governing permissions and
+;;  limitations under the License.
+
+;; ---------------------------------------------------------------------------------------------------
+(require (for-syntax racket/base racket/string)
+         racket/contract
+         racket/require-syntax racket/provide-syntax
+         racket/match
+         racket/list
+         syntax/parse/define
+         racket/struct-info)
+
+(provide provide/cond-contract
+         compiled-with-contracts?
+         (all-from-out racket/contract))
+;; ---------------------------------------------------------------------------------------------------
 ;;
-;; For your convenience, we have included LICENSE-MIT and LICENSE-APACHE files.
-;; If you would prefer to use a different license, replace those files with the
-;; desired license.
+;; Enables contracts optionally - contracts disabled if environment variable NOCONTRACTS is defined
 ;;
-;; Some users like to add a `private/` directory, place auxiliary files there,
-;; and require them in `main.rkt`.
-;;
-;; See the current version of the racket style guide here:
-;; http://docs.racket-lang.org/style/index.html
+;; This works was based on the typed-racket implementation of optional contracts:
+;; https://github.com/racket/typed-racket/blob/master/typed-racket-lib/typed-racket/utils/utils.rkt
 
-;; Code here
+(define-for-syntax enable-contracts?
+  (or (getenv "NOCONTRACTS") #false))
 
+(begin-for-syntax
+  (define-syntax-class clause
+    #:attributes (i)
+    (pattern [(~datum struct) (~or nm:id (nm:id super:id)) (flds ...)]
+             #:with i #'(struct-out nm))
+    (pattern [(~datum rename) out:id in:id cnt:expr]
+             #:with i #'(rename-out [out in]))
+    (pattern [i:id cnt:expr])))
 
+(define-syntax provide/cond-contract
+  (if enable-contracts?
+      (lambda (stx)
+        (syntax-parse stx
+          [(_ c:clause ...)
+           #'(provide (contract-out c ...))]))
+      (lambda (stx)
+        (syntax-parse stx
+          [(_ c:clause ...)
+           #'(provide c.i ...)]))))
 
-(module+ test
-  ;; Any code in this `test` submodule runs when this file is run using DrRacket
-  ;; or with `raco test`. The code here does not run when this file is
-  ;; required by another module.
-
-  (check-equal? (+ 2 2) 4))
-
-(module+ main
-  ;; (Optional) main submodule. Put code here if you need it to be executed when
-  ;; this file is run using DrRacket or the `racket` executable.  The code here
-  ;; does not run when this file is required by another module. Documentation:
-  ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
-
-  (require racket/cmdline)
-  (define who (box "world"))
-  (command-line
-    #:program "my-program"
-    #:once-each
-    [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-    #:args ()
-    (printf "hello ~a~n" (unbox who))))
+(define-syntax (compiled-with-contracts? stx)
+  (datum->syntax stx enable-contracts?))

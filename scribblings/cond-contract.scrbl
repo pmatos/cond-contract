@@ -3,8 +3,10 @@
                     racket/base]]
 
 @title{cond-contract}
-@author{pmatos}
+@author{Paulo Matos}
 
 @defmodule[cond-contract]
 
-Package Description Here
+The @racket[cond-contract] module provides a simple way to optionally disable contracts.
+
+Contracts are opt-out and controlled via the environment variable @tt[NOCONTRACTS].

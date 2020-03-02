@@ -1,4 +1,4 @@
-#lang info
+#lang racket/base
 ;; ---------------------------------------------------------------------------------------------------
 
 ;; Copyright 2020 Paulo Matos
@@ -16,10 +16,19 @@
 ;;  limitations under the License.
 
 ;; ---------------------------------------------------------------------------------------------------
-(define collection "cond-contract")
-(define deps '("base"))
-(define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
-(define scribblings '(("scribblings/cond-contract.scrbl" ())))
-(define pkg-desc "A library to optionally disable contracts")
-(define version "0.1")
-(define pkg-authors '(pmatos))
+
+(require cond-contract)
+
+(provide/cond-contract
+ [factorial-get (exact-positive-integer? . -> . exact-positive-integer?)]
+ [factorial-put! (exact-positive-integer? exact-positive-integer? . -> . void?)])
+
+;; ---------------------------------------------------------------------------------------------------
+
+(define cache (make-hasheq))
+
+(define (factorial-get n)
+  (hash-ref cache n #false))
+
+(define (factorial-put! n v)
+  (hash-set! cache n v))
