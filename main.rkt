@@ -25,17 +25,13 @@
          racket/struct-info)
 
 (provide provide/cond-contract
-         compiled-with-contracts?
          (all-from-out racket/contract))
 ;; ---------------------------------------------------------------------------------------------------
 ;;
-;; Enables contracts optionally - contracts disabled if environment variable NOCONTRACTS is defined
+;; Enables contracts optionally
 ;;
 ;; This works was based on the typed-racket implementation of optional contracts:
 ;; https://github.com/racket/typed-racket/blob/master/typed-racket-lib/typed-racket/utils/utils.rkt
-
-(define-for-syntax enable-contracts?
-  (or (getenv "NOCONTRACTS") #false))
 
 (begin-for-syntax
   (define-syntax-class clause
@@ -46,16 +42,9 @@
              #:with i #'(rename-out [out in]))
     (pattern [i:id cnt:expr])))
 
-(define-syntax provide/cond-contract
-  (if enable-contracts?
-      (lambda (stx)
-        (syntax-parse stx
-          [(_ c:clause ...)
-           #'(provide (contract-out c ...))]))
-      (lambda (stx)
-        (syntax-parse stx
-          [(_ c:clause ...)
-           #'(provide c.i ...)]))))
-
-(define-syntax (compiled-with-contracts? stx)
-  (datum->syntax stx enable-contracts?))
+(define-syntax (provide/cond-contract stx)
+  (syntax-parse stx
+    [(_ enable? c:clause ...)
+     (if enable?
+         #'(provide (contract-out c ...))
+         #'(provide c.i ...))]))

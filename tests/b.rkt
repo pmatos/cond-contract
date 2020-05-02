@@ -20,7 +20,7 @@
 (require cond-contract)
 
 (provide/cond-contract
- [factorial-get (exact-positive-integer? . -> . exact-positive-integer?)]
+ [factorial-get (exact-positive-integer? . -> . (or/c #false exact-positive-integer?))]
  [factorial-put! (exact-positive-integer? exact-positive-integer? . -> . void?)])
 
 ;; ---------------------------------------------------------------------------------------------------

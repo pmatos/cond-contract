@@ -20,7 +20,7 @@
 (require cond-contract
          (file "b.rkt"))
 
-(provide/cond-contract
+(provide/cond-contract #true
  [factorial (exact-positive-integer? . -> . exact-positive-integer?)])
 
 ;; ---------------------------------------------------------------------------------------------------
@@ -33,3 +33,7 @@
      (factorial-put! n v)
      v]
     [else 1]))
+
+
+(module+ main
+  (factorial 512))
